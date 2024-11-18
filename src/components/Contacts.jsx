@@ -18,6 +18,8 @@ function Contacts() {
     email: "",
     phone: "",
   });
+  const [editMode, setEditMode] = useState(false); // برای تشخیص حالت ویرایش
+  const [editId, setEditId] = useState(null); // ذخیره ID برای ویرایش
 
   const filteredContacts = contacts.filter((contact) =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -56,19 +58,38 @@ function Contacts() {
       return;
     }
 
-    openModal(() => {
-      setAlert("");
-      const newContact = { ...contact, id: v4() };
-
-      setContacts((contacts) => [...contacts, newContact]);
-      setContact({
-        id: "",
-        name: "",
-        lastName: "",
-        email: "",
-        phone: "",
+    if (editMode) {
+      // ویرایش مخاطب
+      openModal(() => {
+        const updatedContacts = contacts.map((c) =>
+          c.id === editId ? { ...c, ...contact } : c
+        );
+        setContacts(updatedContacts);
+        setEditMode(false);
+        setEditId(null);
+        setContact({
+          name: "",
+          lastName: "",
+          email: "",
+          phone: "",
+        });
       });
-    });
+    } else {
+      // اضافه کردن مخاطب
+      openModal(() => {
+        setAlert("");
+        const newContact = { ...contact, id: v4() };
+
+        setContacts((contacts) => [...contacts, newContact]);
+        setContact({
+          id: "",
+          name: "",
+          lastName: "",
+          email: "",
+          phone: "",
+        });
+      });
+    }
   };
 
   const deleteHandler = (id) => {
@@ -76,6 +97,13 @@ function Contacts() {
       const newContacts = contacts.filter((contact) => contact.id !== id);
       setContacts(newContacts);
     });
+  };
+
+  const editHandler = (id) => {
+    const contactToEdit = contacts.find((contact) => contact.id === id);
+    setContact(contactToEdit);
+    setEditId(id);
+    setEditMode(true);
   };
 
   const toggleSelectHandler = (id) => {
@@ -119,7 +147,9 @@ function Contacts() {
             />
           ))}
 
-          <button onClick={addHandler}>اضافه کردن مخاطب</button>
+          <button onClick={addHandler}>
+            {editMode ? "ویرایش مخاطب" : "اضافه کردن مخاطب"}
+          </button>
           {selectedContacts.length > 0 && (
             <button onClick={deleteSelectedHandler}>حذف گروهی</button>
           )}
@@ -130,7 +160,7 @@ function Contacts() {
         <ContactList
           contacts={filteredContacts}
           deleteHandler={deleteHandler}
-          editHandler={() => {}}
+          editHandler={editHandler}
           toggleSelectHandler={toggleSelectHandler}
           selectedContacts={selectedContacts}
         />
